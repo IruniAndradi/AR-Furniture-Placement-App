@@ -1,9 +1,142 @@
-Here is a comprehensive, professionally formatted README.md file. It combines a standard GitHub README with the specific "Project Report" sections you requested.You can copy and paste this directly into your GitHub repository.ROOMARTIA2 - AR Furniture Placement AppROOMARTIA2 is an iOS application developed using Swift and ARKit that allows users to visualize furniture in their real-world environment before purchasing. By leveraging Augmented Reality (AR) and RealityKit, users can place, scale, and interact with high-fidelity 3D models of furniture items in real-time.📚 Table of ContentsUser GuideTechnical DocumentationProject ReportDesign DiscussionsDevelopment Challenges & SolutionsTesting ResultsReflectionsInstallation📖 User Guide1. Exploring the CatalogLaunch the app to see the Home Screen.Tap "Start with Catalog" to view the available furniture collection.The catalog includes items like Chairs, Sofas, Lamps, and Plants.2. Placing Furniture in ARSelect an item from the list to open the AR Camera View.Scan the Floor: Move your phone slowly side-to-side. An animated "coaching overlay" will appear to help you find a flat surface.Tap to Place: Once a surface is detected, tap anywhere on the screen to spawn the furniture item.3. Adjusting the ItemMove: Drag the item with one finger to reposition it on the floor.Rotate: Place two fingers on the item and twist to rotate it.Resize: Pinch with two fingers to make the item larger or smaller.4. Saving Your SetupOnce satisfied with the placement, enter a name for your setup (e.g., "New Living Room Layout") in the text field at the bottom.Tap "Save Placement". This saves the record to your history.View your history by returning to Home and tapping "View Saved Placements".🛠 Technical DocumentationTechnology StackComponentTechnology UsedPurposeLanguageSwift 5Core programming language.UI FrameworkSwiftUIBuilding the user interface (Lists, Navigation, Cards).AR EngineARKit + RealityKitHandling plane detection, raycasting, and 3D rendering.DatabaseCoreDataPersisting user history (Saved placements).3D FormatUSDZApple's preferred format for AR assets.System ArchitectureThe app follows a MVVM (Model-View-ViewModel) architectural pattern:Model:FurnitureItem: A struct defining the static data (name, icon, USDZ filename).Placement (CoreData Entity): Stores user-generated records.View:ARViewContainer: A UIViewRepresentable bridge that integrates the UIKit-based ARView into SwiftUI.CatalogView: The main interface for item selection.ViewModel/Controller:ARDataController: Manages the CoreData stack and persistence logic.Key Code Highlight: Auto-Scaling LogicTo ensure consistent object sizing regardless of the source model's units, the app implements a dynamic scaling algorithm in ARViewContainer.swift:Swift// Logic to ensure every model spawns at approx 0.5m height
+# AR Furniture Placement App
+
+**ROOMARTIA2** is an iOS application built with Swift, ARKit, and RealityKit that allows users to visualize furniture in their real environment before purchasing. Users can place, move, rotate, and resize 3D furniture models in real-time using augmented reality.
+
+---
+
+## 📚 Table of Contents
+
+1. [User Guide](#-user-guide)  
+2. [Technical Documentation](#-technical-documentation)  
+3. [Project Report](#-project-report)  
+   - [Design Discussions](#design-discussions)  
+   - [Development Challenges & Solutions](#development-challenges--solutions)  
+   - [Testing Results](#testing-results)  
+   - [Reflections](#reflections)  
+4. [Installation](#-installation)
+
+---
+
+## 📖 User Guide
+
+### 1. Exploring the Catalog
+- Launch the app to open the **Home Screen**.  
+- Tap **“Start with Catalog”** to browse the available furniture items.  
+- Categories include Chairs, Sofas, Lamps, Plants, and more.
+
+### 2. Placing Furniture in AR
+- Select an item to open the **AR Camera View**.  
+- **Scan the Floor** by moving your device side to side.  
+- When a flat surface is detected, **tap the screen** to place the item.
+
+### 3. Adjusting the Item
+- **Move:** Drag with one finger.  
+- **Rotate:** Twist with two fingers.  
+- **Resize:** Pinch in/out to scale.
+
+### 4. Saving Your Setup
+- Enter a name for your layout (e.g., *“Bedroom Setup 1”*).  
+- Tap **“Save Placement”** to store it.  
+- View saved layouts from **Home → Saved Placements**.
+
+---
+
+## 🛠 Technical Documentation
+
+### Technology Stack
+
+| Component | Technology Used | Purpose |
+|----------|------------------|---------|
+| **Language** | Swift 5 | Core development |
+| **UI Framework** | SwiftUI | Building UI components |
+| **AR Engine** | ARKit + RealityKit | Plane detection, rendering, gestures |
+| **Database** | CoreData | Storing user placements |
+| **3D Model Format** | USDZ | Optimized for AR on Apple devices |
+
+### System Architecture (MVVM)
+
+- **Model**  
+  - `FurnitureItem` – Static catalog item data  
+  - `Placement` – CoreData entity for saved layouts  
+
+- **View**  
+  - `CatalogView` – Furniture browser  
+  - `ARViewContainer` – Integrates ARView using `UIViewRepresentable`
+
+- **ViewModel / Controller**  
+  - `ARDataController` – CoreData and state management  
+
+### Auto-Scaling Logic for Model Size
+
+```swift
 let bounds = modelEntity.visualBounds(relativeTo: nil)
 let maxDimension = max(bounds.extents.x, max(bounds.extents.y, bounds.extents.z))
 let targetSize: Float = 0.5
 let scaleFactor = targetSize / maxDimension
-
 modelEntity.scale = SIMD3<Float>(repeating: scaleFactor)
-📝 Project ReportDesign DiscussionsUser Interface (UI):The design philosophy focused on "Glassmorphism" and native iOS aesthetics. We utilized UltraThinMaterial backgrounds and rounded corners (CardStyleModifier) to ensure the UI feels lightweight and does not obstruct the camera view, which is crucial for an AR experience.AR Interaction Design:Instead of simple static placement, we opted for a full interactive suite.Why Raycasting? We used arView.raycast allowing .estimatedPlane to ensure the user can place objects quickly, even if the floor isn't perfectly mapped yet.Why Gestures? Users expect to manipulate virtual objects like real ones. We installed standard translation, rotation, and scaling gestures directly onto the ModelEntity.Development Challenges & SolutionsChallenge 1: Inconsistent Model SizesThe Problem: Models downloaded from external sources (like Sketchfab) often use different units (millimeters vs. meters). Some chairs spawned as large as buildings, while others were invisible microscopic specks.The Solution: We implemented an Auto-Scaling Algorithm. Upon loading, the app calculates the visualBounds of the model entity and mathematically forces the scale to match a target size (0.5 meters) before adding it to the scene.Challenge 2: Model "Floating" or "Burying"The Problem: Some 3D models have their pivot point in the center of the geometry rather than at the base. This caused chairs to spawn halfway underground.The Solution: We enabled collisionShapes recursively. Combined with RealityKit's physics engine, dragging the object forces it to snap to the detected plane surface, effectively "grounding" the object.Challenge 3: User GuidanceThe Problem: Users were unsure when the app was ready to place an object.The Solution: We integrated ARCoachingOverlayView. This is a native Apple UI component that guides the user to move their phone to detect planes, providing immediate feedback on tracking status.Testing ResultsTest CaseScenarioResultStatusPlane DetectionScanning a textured floor (carpet/wood).Planes detected within 2-3 seconds.✅ PassModel LoadingTapping to spawn "Modern Chair".Model loads immediately at correct scale.✅ PassGesturesPinching to resize the object.Object scales smoothly without jitter.✅ PassPersistenceSaving a placement and restarting the app.Record appears in "Saved Placements".✅ PassLightingTesting in low light conditions.Models became slightly unstable (ARKit limitation).⚠️ NoteReflectionsDeveloping ROOMARTIA2 provided deep insights into the complexity of Spatial Computing.SwiftUI vs. ARKit: Bridging the declarative nature of SwiftUI with the imperative nature of ARKit (via UIViewRepresentable) was challenging but resulted in a very clean codebase.Asset Management: The importance of optimized .usdz files became clear; high-polygon models can drop frame rates, so using optimized assets is critical for mobile performance.Future Improvements: In the future, I would like to implement LiDAR scanning (for Pro iPhones) to allow for object occlusion (virtual chairs hiding behind real tables).⬇ InstallationClone the repository:Bashgit clone https://github.com/yourusername/ROOMARTIA2.git
-Open ROOMARTIA2.xcodeproj in Xcode 15+.Connect an iPhone or iPad (AR functionality does not work on the Simulator).Build and Run (Cmd + R).
+```
+
+---
+
+## 📝 Project Report
+
+### Design Discussions
+
+**UI/UX:**  
+The app uses a clean iOS-native design with glassmorphism effects, subtle gradients, rounded cards, and unobtrusive overlays to keep the AR view clear.
+
+**AR Experience:**  
+- Raycasting with `.estimatedPlane` allows fast placement even with incomplete tracking.  
+- Gestures (move, rotate, scale) provide real-world-like interaction.  
+
+---
+
+### Development Challenges & Solutions
+
+#### 1. Inconsistent 3D Model Sizes  
+Some assets imported extremely large or tiny due to different units.  
+✔ **Solution:** Implemented an auto-scaling algorithm using `visualBounds`.
+
+#### 2. Floating or Sinking Models  
+Models often had pivot points in their center.  
+✔ **Solution:** Enabled recursive collision shapes so RealityKit automatically aligns them to the detected plane.
+
+#### 3. User Placement Confusion  
+Users couldn't tell when tracking was ready.  
+✔ **Solution:** Added Apple’s `ARCoachingOverlayView` for guidance.
+
+---
+
+### Testing Results
+
+| Test Case | Scenario | Result | Status |
+|----------|----------|--------|--------|
+| Plane Detection | Carpet, tile, and wood floors | Detected in 2–3 seconds | ✅ Pass |
+| Model Loading | “Modern Chair” asset | Correct scale, instant load | ✅ Pass |
+| Gesture Controls | Rotate, scale, drag | Smooth interaction | ✅ Pass |
+| Saving Layouts | Restart app after saving | Data persists | ✅ Pass |
+| Low-Light Testing | Dim room | AR tracking unstable | ⚠️ Limitation |
+
+---
+
+### Reflections
+
+- Bridging **SwiftUI with ARKit** required careful handling but resulted in clean, modular code.
+- Model optimization was crucial—high-poly assets affect frame rate.
+- Future features may include **LiDAR-based occlusion**, realistic shadows, and multi-object scenes.
+
+---
+
+## ⬇ Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/ROOMARTIA2.git
+   ```
+2. Open `ROOMARTIA2.xcodeproj` using **Xcode 15+**.  
+3. Connect a real iPhone/iPad (ARKit is not supported in Simulator).  
+4. Press **Cmd + R** to run the app.
+
+---
+
+*Developed by **Iruni Andradi***  
